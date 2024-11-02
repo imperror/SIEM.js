@@ -13,6 +13,19 @@
       <th>Count</th>
       <th>Action</th>
     </tr>
+    <tr>
+      <form method="get" action="/alerts">
+        <td><input type="text" name="timestamp" placeholder="Timestamp" value="<%= query.timestamp || '' %>"></td>
+        <td><input type="text" name="severity" placeholder="Severity" value="<%= query.severity || '' %>"></td>
+        <td><input type="text" name="source_ip" placeholder="Source IP" value="<%= query.source_ip || '' %>"></td>
+        <td><input type="text" name="destination_ip" placeholder="Destination IP" value="<%= query.destination_ip || '' %>"></td>
+        <td><input type="text" name="protocol" placeholder="Protocol" value="<%= query.protocol || '' %>"></td>
+        <td><input type="text" name="message" placeholder="Message" value="<%= query.message || '' %>"></td>
+        <td><input type="text" name="status" placeholder="Status" value="<%= query.status || '' %>"></td>
+        <td></td>
+        <td><button type="submit">Apply</button></td>
+      </form>
+    </tr>
   </thead>
   <tbody>
     <% alerts.forEach(alert => { %>
@@ -25,14 +38,17 @@
       <td><a href="/alerts/<%= alert.id %>"><%= alert.message %></a></td>
       <td><%= alert.status %></td>
       <td><%= alert.count || 1 %></td>
+      <!-- In alerts.ejs or escalated view template -->
       <td>
         <form method="post" action="/alerts/<%= alert.id %>/status">
-          <% if (alert.status === 'new') { %>
-          <input type="hidden" name="status" value="escalated">
-          <button type="submit">Escalate</button>
-          <% } else if (alert.status === 'escalated') { %>
-          <input type="hidden" name="status" value="new">
-          <button type="submit">Acknowledge</button>
+          <% if (alert.status === 'escalated') { %>
+            <input type="hidden" name="status" value="acknowledged">
+            <button type="submit">Acknowledge</button>
+            <input type="hidden" name="status" value="updated">
+            <button type="submit">Update</button>
+          <% } else if (alert.status === 'new') { %>
+            <input type="hidden" name="status" value="escalated">
+            <button type="submit">Escalate</button>
           <% } %>
         </form>
       </td>

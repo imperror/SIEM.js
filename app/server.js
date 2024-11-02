@@ -40,27 +40,25 @@ const timeFrames = {
   '1w': 7 * 24 * 60 * 60 * 1000
 };
 
-// Grouping alerts within 30 seconds with the same details
+// Grouping alerts within 30 seconds with the same details, returning distinct groups
 function groupAlerts(alerts) {
   const groupedAlerts = [];
+  const groupedMap = {};
+
   alerts.forEach(alert => {
-    const lastGroup = groupedAlerts[groupedAlerts.length - 1];
-    if (
-      lastGroup &&
-      lastGroup.alertId === alert.alertId &&
-      lastGroup.source_ip === alert.source_ip &&
-      lastGroup.destination_ip === alert.destination_ip &&
-      lastGroup.protocol === alert.protocol &&
-      lastGroup.message === alert.message &&
-      new Date(alert.timestamp) - new Date(lastGroup.timestamp) < 30 * 1000
-    ) {
-      lastGroup.count += 1;
-      lastGroup.timestamp = alert.timestamp;
+    const key = `${alert.alertId}-${alert.source_ip}-${alert.destination_ip}-${alert.protocol}-${alert.message}`;
+    const timestamp = new Date(alert.timestamp);
+
+    if (groupedMap[key] && (timestamp - new Date(groupedMap[key].timestamp) < 30 * 1000)) {
+      groupedMap[key].count += 1;
+      groupedMap[key].timestamp = alert.timestamp;
     } else {
       alert.count = 1;
+      groupedMap[key] = alert;
       groupedAlerts.push(alert);
     }
   });
+
   return groupedAlerts;
 }
 

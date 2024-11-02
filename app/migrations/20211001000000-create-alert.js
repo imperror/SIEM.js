@@ -1,7 +1,7 @@
-'use strict';
+// Migration file for Alerts table
 module.exports = {
-  up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Alerts', {
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable('Alerts', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -29,13 +29,12 @@ module.exports = {
       message: {
         type: Sequelize.STRING
       },
-      packetData: {
-        type: Sequelize.TEXT, // Store large packet data as text
-        allowNull: true,
-      },
       status: {
         type: Sequelize.STRING,
         defaultValue: 'new'
+      },
+      packetData: {
+        type: Sequelize.TEXT // Ensure packet data is stored if required
       },
       createdAt: {
         allowNull: false,
@@ -49,7 +48,7 @@ module.exports = {
       }
     });
   },
-  down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Alerts');
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable('Alerts');
   }
 };

@@ -29,13 +29,15 @@
 
 <!-- Pagination controls -->
 <div class="pagination">
-  <% if (currentPage > 1) { %>
-    <a href="?page=<%= currentPage - 1 %>&limit=<%= query.limit %>&currentTab=<%= currentTab %>">Previous</a>
-  <% } %>
-  <% if (currentPage < totalPages) { %>
-    <a href="?page=<%= currentPage + 1 %>&limit=<%= query.limit %>&currentTab=<%= currentTab %>">Next</a>
-  <% } %>
-</div>
+    <% if (currentPage > 1) { %>
+      <a href="?page=<%= currentPage - 1 %>&currentTab=<%= currentTab %>">Previous</a>
+    <% } %>
+    <span>Page <%= currentPage %> of <%= totalPages %></span>
+    <% if (currentPage < totalPages) { %>
+      <a href="?page=<%= currentPage + 1 %>&currentTab=<%= currentTab %>">Next</a>
+    <% } %>
+  </div>
+  
 
 <!-- Back link to the current tab -->
 <a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %></a>

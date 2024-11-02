@@ -1,4 +1,4 @@
-<h1>Alerts</h1>
+<h1><%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %> Alerts</h1>
 
 <table>
   <thead>
@@ -13,6 +13,7 @@
       <th>Count</th>
       <th>Action</th>
     </tr>
+    <!-- Filter form under the table header -->
     <tr>
       <form method="get" action="/<%= currentTab %>">
         <input type="hidden" name="currentTab" value="<%= currentTab %>">
@@ -39,28 +40,26 @@
       <td><a href="/alerts/<%= alert.id %>"><%= alert.message %></a></td>
       <td><%= alert.status %></td>
       <td><%= alert.count || 1 %></td>
-      <!-- In alerts.ejs or escalated view template -->
       <td>
         <% if (alert.status === 'new') { %>
-          <!-- Form for escalating a new alert -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <!-- Escalate form for new alerts -->
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="escalated">
             <button type="submit">Escalate</button>
           </form>
         <% } else if (alert.status === 'escalated') { %>
-          <!-- Form for acknowledging an escalated alert -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <!-- Acknowledge form for escalated alerts -->
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="acknowledged">
             <button type="submit">Acknowledge</button>
           </form>
-          <!-- Form for updating an escalated alert -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <!-- Update form for escalated alerts -->
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="updated">
             <button type="submit">Update</button>
           </form>
         <% } %>
       </td>
-      
     </tr>
     <% }) %>
   </tbody>
@@ -68,10 +67,10 @@
 
 <div class="pagination">
   <% if (page > 1) { %>
-  <a href="?<%= new URLSearchParams({ ...query, page: page - 1 }).toString() %>">Previous</a>
+    <a href="?<%= new URLSearchParams({ ...query, page: page - 1 }).toString() %>">Previous</a>
   <% } %>
   <span>Page <%= page %> of <%= totalPages %></span>
   <% if (page < totalPages) { %>
-  <a href="?<%= new URLSearchParams({ ...query, page: page + 1 }).toString() %>">Next</a>
+    <a href="?<%= new URLSearchParams({ ...query, page: page + 1 }).toString() %>">Next</a>
   <% } %>
 </div>

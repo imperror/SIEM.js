@@ -40,7 +40,7 @@ const timeFrames = {
   '1w': 7 * 24 * 60 * 60 * 1000
 };
 
-// Update groupAlerts function to ensure consistent grouping logic
+// Grouping function for alerts
 function groupAlerts(alerts) {
   const groupedAlerts = [];
   const groupedMap = {};
@@ -67,8 +67,23 @@ app.get('/', (req, res) => {
   res.redirect('/alerts');
 });
 
-// Alerts Page with Grouping and Pagination
+// Main Alerts Page
 app.get('/alerts', async (req, res) => {
+  await getAlertsPage(req, res, 'alerts');
+});
+
+// Inbox Page (status: new)
+app.get('/inbox', async (req, res) => {
+  await getAlertsPage(req, res, 'inbox', { status: 'new' });
+});
+
+// Escalated Page (status: escalated)
+app.get('/escalated', async (req, res) => {
+  await getAlertsPage(req, res, 'escalated', { status: 'escalated' });
+});
+
+// Common handler for alerts pages with filtering, grouping, and pagination
+async function getAlertsPage(req, res, tabName, additionalFilters = {}) {
   let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol } = req.query;
 
   page = parseInt(page) || 1;
@@ -76,77 +91,13 @@ app.get('/alerts', async (req, res) => {
   sortBy = sortBy || 'timestamp';
   order = order || 'DESC';
 
-  const whereClause = {};
+  const whereClause = { ...additionalFilters };
 
   // Apply filters based on user input
   if (severity) whereClause.severity = severity;
   if (source_ip) whereClause.source_ip = { [Op.iLike]: `%${source_ip}%` };
   if (destination_ip) whereClause.destination_ip = { [Op.iLike]: `%${destination_ip}%` };
   if (protocol) whereClause.protocol = protocol;
-
-  if (timeFrame && timeFrames[timeFrame]) {
-    const now = new Date();
-    const start = new Date(now - timeFrames[timeFrame]);
-    whereClause.timestamp = { [Op.gte]: start };
-  } else if (startTime && endTime) {
-    whereClause.timestamp = {
-      [Op.between]: [new Date(startTime), new Date(endTime)],
-    };
-  }
-
-  // Search filter
-  if (search) {
-    whereClause[Op.or] = [
-      { source_ip: { [Op.iLike]: `%${search}%` } },
-      { destination_ip: { [Op.iLike]: `%${search}%` } },
-      { message: { [Op.iLike]: `%${search}%` } },
-    ];
-  }
-
-  const alerts = await Alert.findAll({
-    where: whereClause,
-    order: [[sortBy, order]],
-    limit: limit,
-    offset: (page - 1) * limit,
-  });
-
-  const groupedAlerts = groupAlerts(alerts);
-
-  const totalAlerts = await Alert.count({ where: whereClause });
-  const totalPages = Math.ceil(totalAlerts / limit);
-
-  res.render('alerts', { alerts: groupedAlerts, page, totalPages, query: req.query, currentTab: 'alerts' });
-});
-
-// Inbox Page (status: new)
-app.get('/inbox', async (req, res) => {
-  const statusFilter = { status: 'new' };
-  await getAlertsPage(req, res, 'inbox', statusFilter);
-});
-
-// Escalated Page (status: escalated)
-app.get('/escalated', async (req, res) => {
-  const statusFilter = { status: 'escalated' };
-  await getAlertsPage(req, res, 'escalated', statusFilter);
-});
-
-// General function to handle alerts pages with filtering, grouping, and pagination
-async function getAlertsPage(req, res, tabName, statusFilter) {
-  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol, status } = req.query;
-
-  page = parseInt(page) || 1;
-  limit = parseInt(limit) || 20;
-  sortBy = sortBy || 'timestamp';
-  order = order || 'DESC';
-
-  const whereClause = { ...statusFilter };
-
-  // Apply filters based on user input
-  if (severity) whereClause.severity = severity;
-  if (source_ip) whereClause.source_ip = { [Op.iLike]: `%${source_ip}%` };
-  if (destination_ip) whereClause.destination_ip = { [Op.iLike]: `%${destination_ip}%` };
-  if (protocol) whereClause.protocol = protocol;
-  if (status) whereClause.status = status;
 
   if (timeFrame && timeFrames[timeFrame]) {
     const now = new Date();
@@ -166,53 +117,54 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
     ];
   }
 
-  const alerts = await Alert.findAll({
+  // Fetch all matching alerts and apply grouping before pagination
+  const allAlerts = await Alert.findAll({
     where: whereClause,
     order: [[sortBy, order]],
-    limit: limit,
-    offset: (page - 1) * limit,
   });
 
-  const groupedAlerts = groupAlerts(alerts);
+  // Group alerts
+  const groupedAlerts = groupAlerts(allAlerts);
 
-  const totalAlerts = await Alert.count({ where: whereClause });
-  const totalPages = Math.ceil(totalAlerts / limit);
+  // Paginate after grouping
+  const totalGrouped = groupedAlerts.length;
+  const totalPages = Math.ceil(totalGrouped / limit);
+  const paginatedAlerts = groupedAlerts.slice((page - 1) * limit, page * limit);
 
-  res.render('alerts', { alerts: groupedAlerts, page, totalPages, query: req.query, currentTab: tabName });
+  res.render('alerts', { alerts: paginatedAlerts, page, totalPages, query: req.query, currentTab: tabName });
 }
 
 app.post('/alerts/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  const currentTab = req.query.currentTab || 'alerts';  // Read currentTab from query
 
   try {
-    // Find the alert to get the grouping criteria
     const alert = await Alert.findByPk(id);
     if (!alert) {
       return res.status(404).send("Alert not found");
     }
 
-    // Define the criteria to identify grouped alerts
     const groupingCriteria = {
       alertId: alert.alertId,
       source_ip: alert.source_ip,
       destination_ip: alert.destination_ip,
       protocol: alert.protocol,
       message: alert.message,
-      status: alert.status  // Only update alerts with the same initial status
+      status: alert.status
     };
 
     // Update the status for all alerts in the group
     await Alert.update({ status }, { where: groupingCriteria });
 
-    // Redirect back to the same tab
-    const currentTab = req.query.currentTab || 'alerts';
+    // Redirect back to the appropriate tab
     res.redirect(`/${currentTab}`);
   } catch (error) {
     console.error("Failed to update grouped alert status:", error);
     res.status(500).send("An error occurred while updating alert status.");
   }
 });
+
 
 
 // Stats Page
@@ -273,23 +225,40 @@ app.get('/events', async (req, res) => {
 
 // Detailed View for Alerts (includes packet info)
 app.get('/alerts/:id', async (req, res) => {
-  const alert = await Alert.findByPk(req.params.id);
+  try {
+    const alert = await Alert.findByPk(req.params.id);
 
-  // Decode packetData if it exists and is in Base64
-  if (alert.packetData) {
-    try {
-      const decodedPacketData = Buffer.from(alert.packetData, 'base64').toString('utf-8');
-      alert.formattedPacketData = decodedPacketData;
-    } catch (e) {
-      console.error("Failed to decode packet data:", e);
-      alert.formattedPacketData = "Decoding error";
+    if (alert && alert.packetData) {
+      try {
+        // Attempt to decode assuming Base64 format, but handle if not base64
+        const decodedPacketData = Buffer.from(alert.packetData, 'base64').toString('utf-8');
+
+        // Check if decoding was successful by testing for readable ASCII
+        const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(decodedPacketData);
+
+        // If decoded content is ASCII-readable, format it as-is; otherwise, treat as hex
+        if (isAsciiReadable) {
+          alert.formattedPacketData = decodedPacketData;
+        } else {
+          alert.formattedPacketData = Buffer.from(alert.packetData, 'base64').toString('hex');
+        }
+      } catch (decodeError) {
+        console.error("Failed to decode packet data as Base64:", decodeError);
+        
+        // Fall back to hex if Base64 decoding fails
+        alert.formattedPacketData = Buffer.from(alert.packetData).toString('hex');
+      }
+    } else {
+      alert.formattedPacketData = "N/A";
     }
-  } else {
-    alert.formattedPacketData = "N/A";
-  }
 
-  res.render('alertDetails', { alert });
+    res.render('alertDetails', { alert });
+  } catch (e) {
+    console.error("Error fetching alert details:", e);
+    res.status(500).send("An error occurred while fetching alert details.");
+  }
 });
+
 
 
 // Start the server

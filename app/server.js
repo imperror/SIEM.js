@@ -117,10 +117,68 @@ app.get('/alerts', async (req, res) => {
   res.render('alerts', { alerts: groupedAlerts, page, totalPages, query: req.query, currentTab: 'alerts' });
 });
 
-// Detailed View for Alerts (includes packet info)
-app.get('/alerts/:id', async (req, res) => {
-  const alert = await Alert.findByPk(req.params.id);
-  res.render('alertDetails', { alert });
+// Inbox Page (status: new)
+app.get('/inbox', async (req, res) => {
+  const statusFilter = { status: 'new' };
+  await getAlertsPage(req, res, 'inbox', statusFilter);
+});
+
+// Escalated Page (status: escalated)
+app.get('/escalated', async (req, res) => {
+  const statusFilter = { status: 'escalated' };
+  await getAlertsPage(req, res, 'escalated', statusFilter);
+});
+
+// General function to handle alerts pages
+async function getAlertsPage(req, res, tabName, statusFilter) {
+  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search } = req.query;
+
+  page = parseInt(page) || 1;
+  limit = parseInt(limit) || 20;
+  sortBy = sortBy || 'timestamp';
+  order = order || 'DESC';
+
+  const whereClause = { ...statusFilter };
+
+  // Time frame filter
+  if (timeFrame && timeFrames[timeFrame]) {
+    const now = new Date();
+    const start = new Date(now - timeFrames[timeFrame]);
+    whereClause.timestamp = { [Op.gte]: start };
+  } else if (startTime && endTime) {
+    whereClause.timestamp = {
+      [Op.between]: [new Date(startTime), new Date(endTime)],
+    };
+  }
+
+  // Search filter
+  if (search) {
+    whereClause[Op.or] = [
+      { source_ip: { [Op.iLike]: `%${search}%` } },
+      { destination_ip: { [Op.iLike]: `%${search}%` } },
+      { message: { [Op.iLike]: `%${search}%` } },
+    ];
+  }
+
+  const alerts = await Alert.findAll({
+    where: whereClause,
+    order: [[sortBy, order]],
+    limit: limit,
+    offset: (page - 1) * limit,
+  });
+
+  const totalAlerts = await Alert.count({ where: whereClause });
+  const totalPages = Math.ceil(totalAlerts / limit);
+
+  res.render('alerts', { alerts, page, totalPages, query: req.query, currentTab: tabName });
+}
+
+// Change alert status (acknowledge or escalate)
+app.post('/alerts/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  await Alert.update({ status }, { where: { id } });
+  res.redirect('back');
 });
 
 // Stats Page
@@ -179,10 +237,10 @@ app.get('/events', async (req, res) => {
   res.render('events', { events, page, totalPages, query: req.query, currentTab: 'events' });
 });
 
-// Detailed View for Events
-app.get('/events/:id', async (req, res) => {
-  const event = await Event.findByPk(req.params.id);
-  res.render('eventDetails', { event });
+// Detailed View for Alerts (includes packet info)
+app.get('/alerts/:id', async (req, res) => {
+  const alert = await Alert.findByPk(req.params.id);
+  res.render('alertDetails', { alert });
 });
 
 // Start the server

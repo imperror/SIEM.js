@@ -9,20 +9,36 @@
   <p><strong>Protocol:</strong> <%= alert.protocol %></p>
   <p><strong>Message:</strong> <%= alert.message %></p>
   <p><strong>Status:</strong> <%= alert.status %></p>
+  
   <p><strong>Packet Data:</strong></p>
-  <pre><%= alert.formattedPacketData || "N/A" %></pre>
+  <select id="packetDataToggle">
+    <option value="decoded">Decoded</option>
+    <option value="original">Original</option>
+  </select>
+
+  <pre id="packetDataContent">
+    <%= alert.decodedPacketData || "N/A" %>
+  </pre>
 </div>
 
 <!-- Pagination controls for single alert viewing within the group -->
 <div class="pagination">
   <% if (currentPage > 1) { %>
-    <a href="?id=<%= alert.id %>&page=<%= currentPage - 1 %>&currentTab=<%= currentTab %>">Previous Alert</a>
+    <a href="/alerts/<%= alert.id %>?page=<%= currentPage - 1 %>&currentTab=<%= currentTab %>">Previous Alert</a>
   <% } %>
   <span>Alert <%= currentPage %> of <%= totalPages %></span>
   <% if (currentPage < totalPages) { %>
-    <a href="?id=<%= alert.id %>&page=<%= currentPage + 1 %>&currentTab=<%= currentTab %>">Next Alert</a>
+    <a href="/alerts/<%= alert.id %>?page=<%= currentPage + 1 %>&currentTab=<%= currentTab %>">Next Alert</a>
   <% } %>
 </div>
 
 <!-- Back to previous tab -->
 <a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %> Alerts</a>
+
+<script>
+  document.getElementById('packetDataToggle').addEventListener('change', function() {
+    const isOriginal = this.value === 'original';
+    const packetDataContent = document.getElementById('packetDataContent');
+    packetDataContent.textContent = isOriginal ? `<%= alert.originalPacketData || "N/A" %>` : `<%= alert.decodedPacketData || "N/A" %>`;
+  });
+</script>

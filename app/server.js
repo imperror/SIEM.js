@@ -225,24 +225,39 @@ app.get('/events', async (req, res) => {
 
 
 function formatPacketData(packetData) {
-  // Check for ASCII readability
-  const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(packetData);
+  let decodedPacketData;
 
-  if (isAsciiReadable) {
-    // If readable ASCII, return as-is with preserved newlines
-    return packetData;
-  } else {
-    // Otherwise, encode as hexadecimal
-    return Buffer.from(packetData, 'base64').toString('hex');
+  try {
+    // Try to decode from Base64 and check readability
+    const decoded = Buffer.from(packetData, 'base64').toString('utf-8');
+    const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(decoded);
+    
+    if (isAsciiReadable) {
+      decodedPacketData = decoded;
+    } else {
+      // If not readable, fall back to the original Base64 data
+      decodedPacketData = packetData;
+    }
+  } catch (error) {
+    //console.error("Failed to decode packet data:", error);
+    // In case of error, use the original data
+    decodedPacketData = packetData;
   }
+
+  // Return both decoded and original versions
+  return {
+    original: packetData,
+    decoded: decodedPacketData
+  };
 }
+
 
 
 // Detailed View for Alerts (includes packet info and pagination)
 app.get('/alerts/:id', async (req, res) => {
   try {
     const { page = 1 } = req.query;
-    const limit = 1; // Set limit to 1 to view one alert at a time
+    const limit = 1;
     const offset = (parseInt(page) - 1) * limit;
 
     // Fetch the primary alert details by ID
@@ -265,9 +280,11 @@ app.get('/alerts/:id', async (req, res) => {
       offset,
     });
 
-    // Apply formatting to packet data for the alert being rendered
+    // Apply formatting and pass both original and decoded packet data
     if (alertsInGroup[0]) {
-      alertsInGroup[0].formattedPacketData = formatPacketData(alertsInGroup[0].packetData);
+      const { original, decoded } = formatPacketData(alertsInGroup[0].packetData);
+      alertsInGroup[0].originalPacketData = original;
+      alertsInGroup[0].decodedPacketData = decoded;
     }
 
     // Calculate total pages for pagination
@@ -282,9 +299,8 @@ app.get('/alerts/:id', async (req, res) => {
     });
     const totalPages = Math.ceil(totalAlerts / limit);
 
-    // Render the alert details, passing formatted packet data
     res.render('alertDetails', {
-      alert: alertsInGroup[0], // Pass only one alert at a time with formatted data
+      alert: alertsInGroup[0],
       currentPage: parseInt(page),
       totalPages,
       currentTab: req.query.currentTab || 'alerts',
@@ -294,6 +310,7 @@ app.get('/alerts/:id', async (req, res) => {
     res.status(500).send("An error occurred while fetching alert details.");
   }
 });
+
 
 
 

@@ -223,41 +223,70 @@ app.get('/events', async (req, res) => {
   res.render('events', { events, page, totalPages, query: req.query, currentTab: 'events' });
 });
 
-// Detailed View for Alerts (includes packet info)
+// Detailed View for Alerts (includes packet info with grouping and pagination)
 app.get('/alerts/:id', async (req, res) => {
+  const { page = 1, limit = 5, currentTab = 'alerts' } = req.query;
+
   try {
     const alert = await Alert.findByPk(req.params.id);
 
-    if (alert && alert.packetData) {
-      try {
-        // Attempt to decode assuming Base64 format, but handle if not base64
-        const decodedPacketData = Buffer.from(alert.packetData, 'base64').toString('utf-8');
-
-        // Check if decoding was successful by testing for readable ASCII
-        const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(decodedPacketData);
-
-        // If decoded content is ASCII-readable, format it as-is; otherwise, treat as hex
-        if (isAsciiReadable) {
-          alert.formattedPacketData = decodedPacketData;
-        } else {
-          alert.formattedPacketData = Buffer.from(alert.packetData, 'base64').toString('hex');
-        }
-      } catch (decodeError) {
-        console.error("Failed to decode packet data as Base64:", decodeError);
-        
-        // Fall back to hex if Base64 decoding fails
-        alert.formattedPacketData = Buffer.from(alert.packetData).toString('hex');
-      }
-    } else {
-      alert.formattedPacketData = "N/A";
+    if (!alert) {
+      return res.status(404).send("Alert not found");
     }
 
-    res.render('alertDetails', { alert });
+    // Grouping criteria and fetching grouped alerts
+    const groupingCriteria = {
+      alertId: alert.alertId,
+      source_ip: alert.source_ip,
+      destination_ip: alert.destination_ip,
+      protocol: alert.protocol,
+      message: alert.message,
+    };
+
+    const { count, rows: groupedAlerts } = await Alert.findAndCountAll({
+      where: groupingCriteria,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * limit,
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    // Format packet data
+    groupedAlerts.forEach(alert => {
+      if (alert.packetData) {
+        try {
+          const decodedPacketData = Buffer.from(alert.packetData, 'base64').toString('utf-8');
+          const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(decodedPacketData);
+
+          alert.formattedPacketData = isAsciiReadable
+            ? decodedPacketData
+            : `Hex: ${Buffer.from(alert.packetData, 'base64').toString('hex').match(/.{1,2}/g).join(' ')}`;
+        } catch (decodeError) {
+          console.error("Failed to decode packet data:", decodeError);
+          alert.formattedPacketData = `Raw Hex: ${Buffer.from(alert.packetData).toString('hex').match(/.{1,2}/g).join(' ')}`;
+        }
+      } else {
+        alert.formattedPacketData = "N/A";
+      }
+    });
+
+    // Render the alert details view with grouped alerts and pagination data
+    res.render('alertDetails', {
+      alert,
+      groupedAlerts,
+      currentPage: parseInt(page),
+      totalPages,
+      query: req.query,
+      currentTab,  // Pass currentTab to view
+    });
   } catch (e) {
     console.error("Error fetching alert details:", e);
     res.status(500).send("An error occurred while fetching alert details.");
   }
 });
+
+
 
 
 

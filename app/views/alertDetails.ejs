@@ -6,6 +6,36 @@
 <p><strong>Destination IP:</strong> <%= alert.destination_ip %></p>
 <p><strong>Protocol:</strong> <%= alert.protocol %></p>
 <p><strong>Message:</strong> <%= alert.message %></p>
-<p><strong>Packet Data:</strong> <pre><%= alert.formattedPacketData %></pre></p>
 
-<a href="/alerts">Back to Alerts</a>
+<h2>Grouped Alerts (Page <%= currentPage %> of <%= totalPages %>)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Severity</th>
+      <th>Packet Data</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% groupedAlerts.forEach(alert => { %>
+      <tr>
+        <td><%= alert.timestamp %></td>
+        <td><%= alert.severity %></td>
+        <td><pre><%= alert.formattedPacketData %></pre></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<!-- Pagination controls -->
+<div class="pagination">
+  <% if (currentPage > 1) { %>
+    <a href="?page=<%= currentPage - 1 %>&limit=<%= query.limit %>&currentTab=<%= currentTab %>">Previous</a>
+  <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a href="?page=<%= currentPage + 1 %>&limit=<%= query.limit %>&currentTab=<%= currentTab %>">Next</a>
+  <% } %>
+</div>
+
+<!-- Back link to the current tab -->
+<a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %></a>

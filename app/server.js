@@ -3,7 +3,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Op, Sequelize } = require('sequelize');
-const { Alert } = require('./models');
+const { Alert, Event } = require('./models'); // Add Event model here
 const app = express();
 const path = require('path');
 const PORT = 3000;
@@ -202,7 +202,47 @@ app.get('/stats', async (req, res) => {
 
 // Events Page
 app.get('/events', async (req, res) => {
-  res.render('events', { currentTab: 'events' });
+  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search } = req.query;
+
+  page = parseInt(page) || 1;
+  limit = parseInt(limit) || 20;
+  sortBy = sortBy || 'timestamp';
+  order = order || 'DESC';
+
+  const whereClause = {};
+
+  // Time frame filter
+  if (timeFrame && timeFrames[timeFrame]) {
+    const now = new Date();
+    const start = new Date(now - timeFrames[timeFrame]);
+    whereClause.timestamp = { [Op.gte]: start };
+  } else if (startTime && endTime) {
+    whereClause.timestamp = {
+      [Op.between]: [new Date(startTime), new Date(endTime)],
+    };
+  }
+
+  // Search filter
+  if (search) {
+    whereClause[Op.or] = [
+      { source_ip: { [Op.iLike]: `%${search}%` } },
+      { destination_ip: { [Op.iLike]: `%${search}%` } },
+      { message: { [Op.iLike]: `%${search}%` } },
+      { eventType: { [Op.iLike]: `%${search}%` } }, // Search by event type
+    ];
+  }
+
+  const totalEvents = await Event.count({ where: whereClause });
+  const totalPages = Math.ceil(totalEvents / limit);
+
+  const events = await Event.findAll({
+    where: whereClause,
+    order: [[sortBy, order]],
+    limit: limit,
+    offset: (page - 1) * limit,
+  });
+
+  res.render('events', { events, page, totalPages, query: req.query, currentTab: 'events' });
 });
 
 // Start the server

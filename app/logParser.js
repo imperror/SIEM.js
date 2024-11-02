@@ -1,6 +1,6 @@
 const fs = require('fs');
 const chokidar = require('chokidar');
-const { Alert } = require('./models');
+const { Alert, Event } = require('./models'); // Import Event model
 
 // Watch the eve.json file
 const watcher = chokidar.watch('/var/log/suricata/eve.json', {
@@ -10,6 +10,9 @@ const watcher = chokidar.watch('/var/log/suricata/eve.json', {
 });
 
 let fileSize = 0;
+
+// Define allowed event types
+const allowedEventTypes = ['alert', 'dns', 'http', 'tls', 'ssh', 'smtp', 'files', 'flow'];
 
 watcher.on('change', (path) => {
   fs.stat(path, (err, stats) => {
@@ -29,7 +32,25 @@ watcher.on('change', (path) => {
           if (line.trim()) {
             try {
               const json = JSON.parse(line);
+
+              // Skip processing if the event type is not in the allowed list
+              if (!allowedEventTypes.includes(json.event_type)) {
+                continue;
+              }
+
+              // Define common data for all events
+              const eventData = {
+                eventType: json.event_type || 'unknown',
+                timestamp: json.timestamp,
+                source_ip: json.src_ip,
+                destination_ip: json.dest_ip,
+                protocol: json.proto,
+                status: 'new',
+              };
+
+              // Check if it's an alert
               if (json.alert) {
+                // Log to Alerts table
                 await Alert.create({
                   alertId: json.alert.signature_id,
                   timestamp: json.timestamp,
@@ -40,7 +61,19 @@ watcher.on('change', (path) => {
                   message: json.alert.signature,
                   status: 'new',
                 });
+
+                // Add additional alert data to the event for logging in Events
+                eventData.alertId = json.alert.signature_id;
+                eventData.severity = json.alert.severity.toString();
+                eventData.message = json.alert.signature;
+              } else {
+                // For non-alert events, fill in relevant fields if they exist
+                eventData.severity = json.severity || null;
+                eventData.message = json.message || null;
               }
+
+              // Log to Events table
+              await Event.create(eventData);
             } catch (e) {
               console.error('Error parsing JSON:', e);
             }

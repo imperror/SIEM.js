@@ -1,0 +1,12 @@
+<% layout('layout') -%>
+
+<h1>Statistics</h1>
+
+<p>Total Alerts: <%= totalAlerts %></p>
+
+<h2>Alerts by Severity</h2>
+<ul>
+  <% severityCounts.forEach(item => { %>
+    <li><%= item.severity %>: <%= item.dataValues.count %></li>
+  <% }) %>
+</ul>

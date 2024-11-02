@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  suricata:
+    image: jasonish/suricata:6.0.15-arm32v6
+    container_name: suricata
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./suricata/config:/etc/suricata
+      - ./suricata/logs:/var/log/suricata
+    command: ["suricata", "-c", "/etc/suricata/suricata.yaml", "-i", "wlan0"]
+    restart: on-failure
+
+  postgres:
+    image: postgres:13-alpine
+    container_name: postgres
+    network_mode: "host"
+    environment:
+      - POSTGRES_USER=siemuser
+      - POSTGRES_PASSWORD=siempass
+      - POSTGRES_DB=siemdb
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    restart: always
+
+  app:
+    image: node:14-alpine
+    container_name: siem-app
+    network_mode: "host"
+    working_dir: /usr/src/app
+    volumes:
+      - ./app:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - DATABASE_URL=postgres://siemuser:siempass@localhost:5432/siemdb
+    command: sh -c "npm install && node server.js"
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    restart: on-failure

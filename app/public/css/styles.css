@@ -1,0 +1,40 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+header nav ul {
+  list-style-type: none;
+  display: flex;
+  padding: 0;
+}
+
+header nav ul li {
+  margin-right: 20px;
+}
+
+header nav ul li a {
+  text-decoration: none;
+}
+
+header nav ul li a.active {
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+table, th, td {
+  border: 1px solid #ccc;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+
+.pagination {
+  margin-top: 20px;
+}

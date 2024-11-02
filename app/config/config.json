@@ -1,0 +1,9 @@
+{
+  "development": {
+    "username": "siemuser",
+    "password": "siempass",
+    "database": "siemdb",
+    "host": "postgres",
+    "dialect": "postgres"
+  }
+}

@@ -251,9 +251,6 @@ app.get('/alerts/:id', async (req, res) => {
       return res.status(404).send("Alert not found");
     }
 
-    // Format packetData using the new function
-    alert.formattedPacketData = alert.packetData ? formatPacketData(alert.packetData) : "N/A";
-
     // Retrieve one alert in the group based on pagination
     const alertsInGroup = await Alert.findAll({
       where: {
@@ -268,6 +265,11 @@ app.get('/alerts/:id', async (req, res) => {
       offset,
     });
 
+    // Apply formatting to packet data for the alert being rendered
+    if (alertsInGroup[0]) {
+      alertsInGroup[0].formattedPacketData = formatPacketData(alertsInGroup[0].packetData);
+    }
+
     // Calculate total pages for pagination
     const totalAlerts = await Alert.count({
       where: {
@@ -280,8 +282,9 @@ app.get('/alerts/:id', async (req, res) => {
     });
     const totalPages = Math.ceil(totalAlerts / limit);
 
+    // Render the alert details, passing formatted packet data
     res.render('alertDetails', {
-      alert: alertsInGroup[0], // Pass only one alert at a time
+      alert: alertsInGroup[0], // Pass only one alert at a time with formatted data
       currentPage: parseInt(page),
       totalPages,
       currentTab: req.query.currentTab || 'alerts',

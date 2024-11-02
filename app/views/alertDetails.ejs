@@ -1,42 +1,28 @@
 <h1>Alert Details</h1>
 
-<table>
-  <thead>
-    <tr>
-      <th>Timestamp</th>
-      <th>Severity</th>
-      <th>Source IP</th>
-      <th>Destination IP</th>
-      <th>Protocol</th>
-      <th>Message</th>
-      <th>Status</th>
-      <th>Packet Data</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% alertsInGroup.forEach(alert => { %>
-      <tr>
-        <td><%= alert.timestamp %></td>
-        <td><%= alert.severity %></td>
-        <td><%= alert.source_ip %></td>
-        <td><%= alert.destination_ip %></td>
-        <td><%= alert.protocol %></td>
-        <td><%= alert.message %></td>
-        <td><%= alert.status %></td>
-        <td><pre><%= alert.formattedPacketData || "N/A" %></pre></td>
-      </tr>
-    <% }) %>
-  </tbody>
-</table>
+<div>
+  <h2>Details for Alert ID: <%= alert.id %></h2>
+  <p><strong>Timestamp:</strong> <%= alert.timestamp %></p>
+  <p><strong>Severity:</strong> <%= alert.severity %></p>
+  <p><strong>Source IP:</strong> <%= alert.source_ip %></p>
+  <p><strong>Destination IP:</strong> <%= alert.destination_ip %></p>
+  <p><strong>Protocol:</strong> <%= alert.protocol %></p>
+  <p><strong>Message:</strong> <%= alert.message %></p>
+  <p><strong>Status:</strong> <%= alert.status %></p>
+  <p><strong>Packet Data:</strong></p>
+  <pre><%= alert.formattedPacketData || "N/A" %></pre>
+</div>
 
+<!-- Pagination controls for single alert viewing within the group -->
 <div class="pagination">
   <% if (currentPage > 1) { %>
-    <a href="?page=<%= currentPage - 1 %>&currentTab=<%= currentTab %>">Previous</a>
+    <a href="?id=<%= alert.id %>&page=<%= currentPage - 1 %>&currentTab=<%= currentTab %>">Previous Alert</a>
   <% } %>
-  <span>Page <%= currentPage %> of <%= totalPages %></span>
+  <span>Alert <%= currentPage %> of <%= totalPages %></span>
   <% if (currentPage < totalPages) { %>
-    <a href="?page=<%= currentPage + 1 %>&currentTab=<%= currentTab %>">Next</a>
+    <a href="?id=<%= alert.id %>&page=<%= currentPage + 1 %>&currentTab=<%= currentTab %>">Next Alert</a>
   <% } %>
 </div>
 
-<a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %></a>
+<!-- Back to previous tab -->
+<a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %> Alerts</a>

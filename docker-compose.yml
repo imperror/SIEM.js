@@ -26,22 +26,22 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
     restart: always
 
-app:
-  image: node:14-alpine
-  container_name: siem-app
-  network_mode: "host"
-  working_dir: /usr/src/app
-  volumes:
-    - ./app:/usr/src/app
-    - /usr/src/app/node_modules
-  environment:
-    - DATABASE_URL=postgres://siemuser:siempass@localhost:5432/siemdb
-  command: sh -c "npm install && npx sequelize-cli db:migrate && node server.js"
-  depends_on:
-    - postgres
-  ports:
-    - "3000:3000"
-  restart: on-failure
+  app:
+    image: node:14-alpine
+    container_name: siem-app
+    network_mode: "host"
+    working_dir: /usr/src/app
+    volumes:
+      - ./app:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - DATABASE_URL=postgres://siemuser:siempass@localhost:5432/siemdb
+    command: sh -c "npm install && npx sequelize-cli db:migrate && node server.js"
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    restart: on-failure
 
   adminer:
     image: adminer

@@ -1,0 +1,11 @@
+<h1>Alert Details</h1>
+
+<p><strong>Timestamp:</strong> <%= alert.timestamp %></p>
+<p><strong>Severity:</strong> <%= alert.severity %></p>
+<p><strong>Source IP:</strong> <%= alert.source_ip %></p>
+<p><strong>Destination IP:</strong> <%= alert.destination_ip %></p>
+<p><strong>Protocol:</strong> <%= alert.protocol %></p>
+<p><strong>Message:</strong> <%= alert.message %></p>
+<p><strong>Packet Data:</strong> <%= alert.packetData || 'N/A' %></p>
+
+<a href="/alerts">Back to Alerts</a>

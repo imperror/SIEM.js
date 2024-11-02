@@ -224,25 +224,16 @@ app.get('/events', async (req, res) => {
 });
 
 
-// Helper function to decode packetData intelligently
-function decodePacketData(packetData) {
-  try {
-    // Try decoding as Base64 if the data looks like Base64
-    const isBase64 = /^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/.test(packetData);
-    
-    if (isBase64) {
-      const decodedData = Buffer.from(packetData, 'base64').toString('utf-8');
-      
-      // Check if the decoded data is ASCII-readable
-      const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(decodedData);
-      return isAsciiReadable ? decodedData : Buffer.from(packetData, 'base64').toString('hex');
-    } else {
-      // If it’s not Base64, assume it’s plain text or hex and return as-is
-      return packetData;
-    }
-  } catch (error) {
-    console.error("Error decoding packet data:", error);
-    return "Error decoding packet data.";
+function formatPacketData(packetData) {
+  // Check for ASCII readability
+  const isAsciiReadable = /^[\x20-\x7E\s]*$/.test(packetData);
+
+  if (isAsciiReadable) {
+    // If readable ASCII, return as-is with preserved newlines
+    return packetData;
+  } else {
+    // Otherwise, encode as hexadecimal
+    return Buffer.from(packetData, 'base64').toString('hex');
   }
 }
 
@@ -251,19 +242,19 @@ function decodePacketData(packetData) {
 app.get('/alerts/:id', async (req, res) => {
   try {
     const { page = 1 } = req.query;
-    const limit = 1; // Viewing one alert at a time
+    const limit = 1; // Set limit to 1 to view one alert at a time
     const offset = (parseInt(page) - 1) * limit;
 
-    // Fetch the main alert by ID
+    // Fetch the primary alert details by ID
     const alert = await Alert.findByPk(req.params.id);
     if (!alert) {
       return res.status(404).send("Alert not found");
     }
 
-    // Decode packet data using helper function
-    alert.formattedPacketData = alert.packetData ? decodePacketData(alert.packetData) : "N/A";
+    // Format packetData using the new function
+    alert.formattedPacketData = alert.packetData ? formatPacketData(alert.packetData) : "N/A";
 
-    // Retrieve alerts in the group based on pagination
+    // Retrieve one alert in the group based on pagination
     const alertsInGroup = await Alert.findAll({
       where: {
         alertId: alert.alertId,
@@ -277,7 +268,7 @@ app.get('/alerts/:id', async (req, res) => {
       offset,
     });
 
-    // Count total alerts in the group for pagination
+    // Calculate total pages for pagination
     const totalAlerts = await Alert.count({
       where: {
         alertId: alert.alertId,
@@ -290,7 +281,7 @@ app.get('/alerts/:id', async (req, res) => {
     const totalPages = Math.ceil(totalAlerts / limit);
 
     res.render('alertDetails', {
-      alert: alertsInGroup[0], // Display a single alert per page
+      alert: alertsInGroup[0], // Pass only one alert at a time
       currentPage: parseInt(page),
       totalPages,
       currentTab: req.query.currentTab || 'alerts',
@@ -300,6 +291,7 @@ app.get('/alerts/:id', async (req, res) => {
     res.status(500).send("An error occurred while fetching alert details.");
   }
 });
+
 
 
 // Start the server

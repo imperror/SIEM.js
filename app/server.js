@@ -3,15 +3,22 @@ const bodyParser = require('body-parser');
 const { Op, Sequelize } = require('sequelize');
 const { Alert } = require('./models');
 const app = express();
+const path = require('path');
 const PORT = 3000;
+
+const expressLayouts = require('express-ejs-layouts');
 
 // Set up EJS templating
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.static('public'));
+//app.use(express.static('public'));
+app.use(expressLayouts);
+app.set('layout', 'layout'); // This is the default, but you can specify your layout file if named differently
+
 
 // Start the log parser
 require('./logParser');

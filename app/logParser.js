@@ -1,6 +1,6 @@
 const fs = require('fs');
 const chokidar = require('chokidar');
-const { Alert, Event } = require('./models'); // Import Event model
+const { Alert, Event } = require('./models');
 
 // Watch the eve.json file
 const watcher = chokidar.watch('/var/log/suricata/eve.json', {
@@ -48,10 +48,10 @@ watcher.on('change', (path) => {
                 status: 'new',
               };
 
-              // Check if it's an alert
+              // Check if it's an alert and capture packet data if available
               if (json.alert) {
-                // Log to Alerts table
-                console.log("Processing alert:", json.alert.signature); // Debug log for alert processing
+                console.log("Processing alert:", json.alert.signature);
+
                 await Alert.create({
                   alertId: json.alert.signature_id,
                   timestamp: json.timestamp,
@@ -61,9 +61,9 @@ watcher.on('change', (path) => {
                   protocol: json.proto,
                   message: json.alert.signature,
                   status: 'new',
+                  packetData: json.packet || null, // Store packet data if available
                 });
 
-                // Add additional alert data to the event for logging in Events
                 eventData.alertId = json.alert.signature_id;
                 eventData.severity = json.alert.severity.toString();
                 eventData.message = json.alert.signature;

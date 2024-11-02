@@ -6,6 +6,6 @@
 <p><strong>Destination IP:</strong> <%= alert.destination_ip %></p>
 <p><strong>Protocol:</strong> <%= alert.protocol %></p>
 <p><strong>Message:</strong> <%= alert.message %></p>
-<p><strong>Packet Data:</strong> <%= alert.packetData || 'N/A' %></p>
+<p><strong>Packet Data:</strong> <pre><%= alert.formattedPacketData %></pre></p>
 
 <a href="/alerts">Back to Alerts</a>

@@ -24,7 +24,7 @@
       <td><%= alert.protocol %></td>
       <td><a href="/alerts/<%= alert.id %>"><%= alert.message %></a></td>
       <td><%= alert.status %></td>
-      <td><%= alert.count %></td>
+      <td><%= alert.count || 1 %></td>
       <td>
         <form method="post" action="/alerts/<%= alert.id %>/status">
           <% if (alert.status === 'new') { %>

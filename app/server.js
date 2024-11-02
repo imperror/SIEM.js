@@ -11,8 +11,6 @@ const expressLayouts = require('express-ejs-layouts');
 // Set up EJS templating
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
-// Use express-ejs-layouts middleware
 app.use(expressLayouts);
 app.set('layout', 'layout');
 
@@ -73,7 +71,7 @@ app.get('/', (req, res) => {
 
 // Alerts Page with Grouping and Pagination
 app.get('/alerts', async (req, res) => {
-  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search } = req.query;
+  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol } = req.query;
 
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 20;
@@ -82,7 +80,12 @@ app.get('/alerts', async (req, res) => {
 
   const whereClause = {};
 
-  // Time frame filter
+  // Apply filters based on user input
+  if (severity) whereClause.severity = severity;
+  if (source_ip) whereClause.source_ip = { [Op.iLike]: `%${source_ip}%` };
+  if (destination_ip) whereClause.destination_ip = { [Op.iLike]: `%${destination_ip}%` };
+  if (protocol) whereClause.protocol = protocol;
+
   if (timeFrame && timeFrames[timeFrame]) {
     const now = new Date();
     const start = new Date(now - timeFrames[timeFrame]);
@@ -131,7 +134,7 @@ app.get('/escalated', async (req, res) => {
 
 // General function to handle alerts pages
 async function getAlertsPage(req, res, tabName, statusFilter) {
-  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search } = req.query;
+  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol } = req.query;
 
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 20;
@@ -140,7 +143,12 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
 
   const whereClause = { ...statusFilter };
 
-  // Time frame filter
+  // Apply filters based on user input
+  if (severity) whereClause.severity = severity;
+  if (source_ip) whereClause.source_ip = { [Op.iLike]: `%${source_ip}%` };
+  if (destination_ip) whereClause.destination_ip = { [Op.iLike]: `%${destination_ip}%` };
+  if (protocol) whereClause.protocol = protocol;
+
   if (timeFrame && timeFrames[timeFrame]) {
     const now = new Date();
     const start = new Date(now - timeFrames[timeFrame]);
@@ -240,8 +248,23 @@ app.get('/events', async (req, res) => {
 // Detailed View for Alerts (includes packet info)
 app.get('/alerts/:id', async (req, res) => {
   const alert = await Alert.findByPk(req.params.id);
+
+  // Decode packetData if it exists and is in Base64
+  if (alert.packetData) {
+    try {
+      const decodedPacketData = Buffer.from(alert.packetData, 'base64').toString('utf-8');
+      alert.formattedPacketData = decodedPacketData;
+    } catch (e) {
+      console.error("Failed to decode packet data:", e);
+      alert.formattedPacketData = "Decoding error";
+    }
+  } else {
+    alert.formattedPacketData = "N/A";
+  }
+
   res.render('alertDetails', { alert });
 });
+
 
 // Start the server
 app.listen(PORT, () => {

@@ -29,6 +29,10 @@ module.exports = {
       message: {
         type: Sequelize.STRING
       },
+      packetData: {
+        type: Sequelize.TEXT, // Store large packet data as text
+        allowNull: true,
+      },
       status: {
         type: Sequelize.STRING,
         defaultValue: 'new'

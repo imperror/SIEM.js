@@ -43,22 +43,19 @@
       <td>
         <% if (alert.status === 'new') { %>
           <!-- Escalate form for new alerts -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="escalated">
-            <input type="hidden" name="currentTab" value="<%= currentTab %>">
             <button type="submit">Escalate</button>
           </form>
         <% } else if (alert.status === 'escalated') { %>
           <!-- Acknowledge form for escalated alerts -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="acknowledged">
-            <input type="hidden" name="currentTab" value="<%= currentTab %>">
             <button type="submit">Acknowledge</button>
           </form>
           <!-- Update form for escalated alerts -->
-          <form method="post" action="/alerts/<%= alert.id %>/status">
+          <form method="post" action="/alerts/<%= alert.id %>/status?currentTab=<%= currentTab %>">
             <input type="hidden" name="status" value="updated">
-            <input type="hidden" name="currentTab" value="<%= currentTab %>">
             <button type="submit">Update</button>
           </form>
         <% } %>

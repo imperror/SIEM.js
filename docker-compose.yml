@@ -42,13 +42,3 @@ services:
     ports:
       - "3000:3000"
     restart: on-failure
-
-  adminer:
-    image: adminer
-    container_name: adminer
-    network_mode: "host"
-    restart: always
-    environment:
-      ADMINER_DEFAULT_SERVER: localhost
-    ports:
-      - "8081:8080"  # Changed to avoid port conflict

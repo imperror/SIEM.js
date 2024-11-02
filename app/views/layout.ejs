@@ -1,3 +1,5 @@
+<!-- views/layout.ejs -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,15 +21,15 @@
       <label for="timeFrame">Time Frame:</label>
       <select name="timeFrame" id="timeFrame">
         <option value="">--Select--</option>
-        <option value="15min" <%= query.timeFrame === '15min' ? 'selected' : '' %>>Last 15 minutes</option>
-        <option value="30min" <%= query.timeFrame === '30min' ? 'selected' : '' %>>Last 30 minutes</option>
-        <option value="1h" <%= query.timeFrame === '1h' ? 'selected' : '' %>>Last 1 hour</option>
-        <option value="3h" <%= query.timeFrame === '3h' ? 'selected' : '' %>>Last 3 hours</option>
-        <option value="12h" <%= query.timeFrame === '12h' ? 'selected' : '' %>>Last 12 hours</option>
-        <option value="1d" <%= query.timeFrame === '1d' ? 'selected' : '' %>>Last 1 day</option>
-        <option value="1w" <%= query.timeFrame === '1w' ? 'selected' : '' %>>Last 1 week</option>
+        <option value="15min" <%= (query && query.timeFrame === '15min') ? 'selected' : '' %>>Last 15 minutes</option>
+        <option value="30min" <%= (query && query.timeFrame === '30min') ? 'selected' : '' %>>Last 30 minutes</option>
+        <option value="1h" <%= (query && query.timeFrame === '1h') ? 'selected' : '' %>>Last 1 hour</option>
+        <option value="3h" <%= (query && query.timeFrame === '3h') ? 'selected' : '' %>>Last 3 hours</option>
+        <option value="12h" <%= (query && query.timeFrame === '12h') ? 'selected' : '' %>>Last 12 hours</option>
+        <option value="1d" <%= (query && query.timeFrame === '1d') ? 'selected' : '' %>>Last 1 day</option>
+        <option value="1w" <%= (query && query.timeFrame === '1w') ? 'selected' : '' %>>Last 1 week</option>
       </select>
-      <input type="text" name="search" placeholder="Search..." value="<%= query.search || '' %>">
+      <input type="text" name="search" placeholder="Search..." value="<%= (query && query.search) ? query.search : '' %>">
       <button type="submit">Apply</button>
     </form>
   </header>

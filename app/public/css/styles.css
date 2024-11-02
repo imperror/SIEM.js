@@ -1,29 +1,64 @@
+/* public/css/styles.css */
+
 body {
   font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
-header nav ul {
-  list-style-type: none;
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 0;
+}
+
+nav ul {
+  list-style: none;
   display: flex;
+  justify-content: center;
+  margin: 0;
   padding: 0;
 }
 
-header nav ul li {
-  margin-right: 20px;
+nav ul li {
+  margin: 0 15px;
 }
 
-header nav ul li a {
+nav ul li a {
+  color: #fff;
   text-decoration: none;
+  font-weight: bold;
 }
 
-header nav ul li a.active {
-  font-weight: bold;
+nav ul li a.active {
+  text-decoration: underline;
+}
+
+form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+form label {
+  margin-right: 10px;
+}
+
+form select, form input[type="text"] {
+  margin-right: 10px;
+  padding: 5px;
+}
+
+main {
+  padding: 20px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 table, th, td {
@@ -36,5 +71,22 @@ th, td {
 }
 
 .pagination {
-  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #333;
+}
+
+.pagination span {
+  margin: 0 10px;
+}
+
+button {
+  padding: 5px 10px;
+  cursor: pointer;
 }

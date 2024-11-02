@@ -1,3 +1,5 @@
+// server.js
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Op, Sequelize } = require('sequelize');
@@ -12,13 +14,21 @@ const expressLayouts = require('express-ejs-layouts');
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Use express-ejs-layouts middleware
+app.use(expressLayouts);
+app.set('layout', 'layout'); // 'layout' corresponds to 'views/layout.ejs'
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-//app.use(express.static('public'));
-app.use(expressLayouts);
-app.set('layout', 'layout'); // This is the default, but you can specify your layout file if named differently
+app.use(express.static(path.join(__dirname, 'public'))); // Correctly set static files directory
 
+// Middleware to pass common variables to all templates
+app.use((req, res, next) => {
+  res.locals.query = req.query;
+  res.locals.currentTab = ''; // Will be set per route
+  next();
+});
 
 // Start the log parser
 require('./logParser');

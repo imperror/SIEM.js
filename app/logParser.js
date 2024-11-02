@@ -51,6 +51,7 @@ watcher.on('change', (path) => {
               // Check if it's an alert
               if (json.alert) {
                 // Log to Alerts table
+                console.log("Processing alert:", json.alert.signature); // Debug log for alert processing
                 await Alert.create({
                   alertId: json.alert.signature_id,
                   timestamp: json.timestamp,

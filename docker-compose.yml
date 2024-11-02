@@ -34,6 +34,7 @@ services:
     volumes:
       - ./app:/usr/src/app
       - /usr/src/app/node_modules
+      - ./suricata/logs:/var/log/suricata # Mount Suricata logs here
     environment:
       - DATABASE_URL=postgres://siemuser:siempass@localhost:5432/siemdb
     command: sh -c "npm install && npx sequelize-cli db:migrate && node server.js"

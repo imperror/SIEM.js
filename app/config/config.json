@@ -3,7 +3,7 @@
     "username": "siemuser",
     "password": "siempass",
     "database": "siemdb",
-    "host": "postgres",
+    "host": "localhost",
     "dialect": "postgres"
   }
 }

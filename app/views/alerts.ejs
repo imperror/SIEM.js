@@ -41,18 +41,26 @@
       <td><%= alert.count || 1 %></td>
       <!-- In alerts.ejs or escalated view template -->
       <td>
-        <form method="post" action="/alerts/<%= alert.id %>/status">
-          <% if (alert.status === 'new') { %>
+        <% if (alert.status === 'new') { %>
+          <!-- Form for escalating a new alert -->
+          <form method="post" action="/alerts/<%= alert.id %>/status">
             <input type="hidden" name="status" value="escalated">
             <button type="submit">Escalate</button>
-          <% } else if (alert.status === 'escalated') { %>
+          </form>
+        <% } else if (alert.status === 'escalated') { %>
+          <!-- Form for acknowledging an escalated alert -->
+          <form method="post" action="/alerts/<%= alert.id %>/status">
             <input type="hidden" name="status" value="acknowledged">
             <button type="submit">Acknowledge</button>
+          </form>
+          <!-- Form for updating an escalated alert -->
+          <form method="post" action="/alerts/<%= alert.id %>/status">
             <input type="hidden" name="status" value="updated">
             <button type="submit">Update</button>
-          <% } %>
-        </form>
+          </form>
+        <% } %>
       </td>
+      
     </tr>
     <% }) %>
   </tbody>

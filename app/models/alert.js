@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     destination_ip: DataTypes.STRING,
     protocol: DataTypes.STRING,
     message: DataTypes.STRING,
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    packetData: DataTypes.TEXT // Add packetData here to match the migration and enable storage
   }, {});
   Alert.associate = function(models) {
     // associations can be defined here

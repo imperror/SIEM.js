@@ -181,17 +181,39 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
   res.render('alerts', { alerts: groupedAlerts, page, totalPages, query: req.query, currentTab: tabName });
 }
 
-// Change alert status (acknowledge or escalate)
 app.post('/alerts/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  await Alert.update({ status }, { where: { id } });
+  try {
+    // Find the alert to get the grouping criteria
+    const alert = await Alert.findByPk(id);
+    if (!alert) {
+      return res.status(404).send("Alert not found");
+    }
 
-  // Redirect back to the same tab
-  const currentTab = req.query.currentTab || 'alerts';
-  res.redirect(`/${currentTab}`);
+    // Define the criteria to identify grouped alerts
+    const groupingCriteria = {
+      alertId: alert.alertId,
+      source_ip: alert.source_ip,
+      destination_ip: alert.destination_ip,
+      protocol: alert.protocol,
+      message: alert.message,
+      status: alert.status  // Only update alerts with the same initial status
+    };
+
+    // Update the status for all alerts in the group
+    await Alert.update({ status }, { where: groupingCriteria });
+
+    // Redirect back to the same tab
+    const currentTab = req.query.currentTab || 'alerts';
+    res.redirect(`/${currentTab}`);
+  } catch (error) {
+    console.error("Failed to update grouped alert status:", error);
+    res.status(500).send("An error occurred while updating alert status.");
+  }
 });
+
 
 // Stats Page
 app.get('/stats', async (req, res) => {

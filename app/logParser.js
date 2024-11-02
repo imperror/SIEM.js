@@ -61,7 +61,7 @@ watcher.on('change', (path) => {
                   protocol: json.proto,
                   message: json.alert.signature,
                   status: 'new',
-                  packetData: json.packet || null, // Store packet data if available
+                  packetData: json.payload || null, // Store packet data if available
                 });
 
                 eventData.alertId = json.alert.signature_id;

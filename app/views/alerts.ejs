@@ -14,7 +14,8 @@
       <th>Action</th>
     </tr>
     <tr>
-      <form method="get" action="/alerts">
+      <form method="get" action="/<%= currentTab %>">
+        <input type="hidden" name="currentTab" value="<%= currentTab %>">
         <td><input type="text" name="timestamp" placeholder="Timestamp" value="<%= query.timestamp || '' %>"></td>
         <td><input type="text" name="severity" placeholder="Severity" value="<%= query.severity || '' %>"></td>
         <td><input type="text" name="source_ip" placeholder="Source IP" value="<%= query.source_ip || '' %>"></td>
@@ -41,14 +42,14 @@
       <!-- In alerts.ejs or escalated view template -->
       <td>
         <form method="post" action="/alerts/<%= alert.id %>/status">
-          <% if (alert.status === 'escalated') { %>
+          <% if (alert.status === 'new') { %>
+            <input type="hidden" name="status" value="escalated">
+            <button type="submit">Escalate</button>
+          <% } else if (alert.status === 'escalated') { %>
             <input type="hidden" name="status" value="acknowledged">
             <button type="submit">Acknowledge</button>
             <input type="hidden" name="status" value="updated">
             <button type="submit">Update</button>
-          <% } else if (alert.status === 'new') { %>
-            <input type="hidden" name="status" value="escalated">
-            <button type="submit">Escalate</button>
           <% } %>
         </form>
       </td>

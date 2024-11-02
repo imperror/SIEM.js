@@ -40,7 +40,7 @@ const timeFrames = {
   '1w': 7 * 24 * 60 * 60 * 1000
 };
 
-// Grouping alerts within 30 seconds with the same details, returning distinct groups
+// Update groupAlerts function to ensure consistent grouping logic
 function groupAlerts(alerts) {
   const groupedAlerts = [];
   const groupedMap = {};
@@ -130,9 +130,9 @@ app.get('/escalated', async (req, res) => {
   await getAlertsPage(req, res, 'escalated', statusFilter);
 });
 
-// General function to handle alerts pages
+// General function to handle alerts pages with filtering, grouping, and pagination
 async function getAlertsPage(req, res, tabName, statusFilter) {
-  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol } = req.query;
+  let { page, limit, sortBy, order, startTime, endTime, timeFrame, search, severity, source_ip, destination_ip, protocol, status } = req.query;
 
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 20;
@@ -146,6 +146,7 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
   if (source_ip) whereClause.source_ip = { [Op.iLike]: `%${source_ip}%` };
   if (destination_ip) whereClause.destination_ip = { [Op.iLike]: `%${destination_ip}%` };
   if (protocol) whereClause.protocol = protocol;
+  if (status) whereClause.status = status;
 
   if (timeFrame && timeFrames[timeFrame]) {
     const now = new Date();
@@ -157,7 +158,6 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
     };
   }
 
-  // Search filter
   if (search) {
     whereClause[Op.or] = [
       { source_ip: { [Op.iLike]: `%${search}%` } },
@@ -173,18 +173,24 @@ async function getAlertsPage(req, res, tabName, statusFilter) {
     offset: (page - 1) * limit,
   });
 
+  const groupedAlerts = groupAlerts(alerts);
+
   const totalAlerts = await Alert.count({ where: whereClause });
   const totalPages = Math.ceil(totalAlerts / limit);
 
-  res.render('alerts', { alerts, page, totalPages, query: req.query, currentTab: tabName });
+  res.render('alerts', { alerts: groupedAlerts, page, totalPages, query: req.query, currentTab: tabName });
 }
 
 // Change alert status (acknowledge or escalate)
 app.post('/alerts/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+
   await Alert.update({ status }, { where: { id } });
-  res.redirect('back');
+
+  // Redirect back to the same tab
+  const currentTab = req.query.currentTab || 'alerts';
+  res.redirect(`/${currentTab}`);
 });
 
 // Stats Page

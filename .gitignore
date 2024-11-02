@@ -1,0 +1,11 @@
+# Node.js dependencies
+app/node_modules/
+
+# Logs
+*.log
+logs/
+suricata/logs/
+postgres/data/
+
+# Environment files
+.env

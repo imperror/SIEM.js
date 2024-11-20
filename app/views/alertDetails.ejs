@@ -51,36 +51,45 @@
   });
 
   async function openChatPopup(messageContent, apiKey) {
-    // Show the overlay and popup
-    document.getElementById('chatOverlay').style.display = 'block';
-    document.getElementById('chatPopup').style.display = 'block';
-    document.getElementById('chatContent').innerText = `Message: ${messageContent}`;
-    document.getElementById('loadingMessage').style.display = 'block';
+  // Show the overlay and popup
+  document.getElementById('chatOverlay').style.display = 'block';
+  document.getElementById('chatPopup').style.display = 'block';
+  document.getElementById('chatContent').innerText = `Message: ${messageContent}`;
+  document.getElementById('loadingMessage').style.display = 'block';
 
-    // ChatGPT API interaction
-    const chatContentElement = document.getElementById('chatContent');
+  // ChatGPT API interaction
+  const chatContentElement = document.getElementById('chatContent');
 
-    try {
-      const response = await fetch("https://api.openai.com/v1/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "text-davinci-003",
-          prompt: `Help me understand this Suricata alert: ${messageContent}`,
-          max_tokens: 150,
-        }),
-      });
-      const data = await response.json();
-      chatContentElement.innerText += "\n\nChatGPT Response:\n" + data.choices[0].text;
-    } catch (error) {
-      chatContentElement.innerText += "\n\nError retrieving response from ChatGPT.";
-    } finally {
-      document.getElementById('loadingMessage').style.display = 'none';
-    }
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant knowledgeable about Suricata alerts."
+          },
+          {
+            role: "user",
+            content: `Help me understand this Suricata alert: ${messageContent}`
+          }
+        ],
+        max_tokens: 150,
+      }),
+    });
+    const data = await response.json();
+    chatContentElement.innerText += "\n\nChatGPT Response:\n" + data.choices[0].message.content;
+  } catch (error) {
+    chatContentElement.innerText += "\n\nError retrieving response from ChatGPT.";
+  } finally {
+    document.getElementById('loadingMessage').style.display = 'none';
   }
+}
 
   function closeChatPopup() {
     document.getElementById('chatOverlay').style.display = 'none';

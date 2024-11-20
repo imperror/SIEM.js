@@ -41,6 +41,4 @@ services:
     command: sh -c "npm install && npx sequelize-cli db:migrate && node server.js"
     depends_on:
       - postgres
-    ports:
-      - "3000:3000"
     restart: on-failure

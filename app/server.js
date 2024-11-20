@@ -304,6 +304,7 @@ app.get('/alerts/:id', async (req, res) => {
       currentPage: parseInt(page),
       totalPages,
       currentTab: req.query.currentTab || 'alerts',
+      chatgptApiKey : process.env.CHATGPT_API_KEY
     });
   } catch (error) {
     console.error("Error fetching alert details:", error);

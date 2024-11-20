@@ -7,7 +7,7 @@
   <p><strong>Source IP:</strong> <%= alert.source_ip %></p>
   <p><strong>Destination IP:</strong> <%= alert.destination_ip %></p>
   <p><strong>Protocol:</strong> <%= alert.protocol %></p>
-  <p><strong>Message:</strong> <%= alert.message %></p>
+  <p><strong>Message:</strong> <span class="message" onclick="openChatPopup('<%= alert.message %>', '<%= chatgptApiKey %>')"><%= alert.message %></span></p>
   <p><strong>Status:</strong> <%= alert.status %></p>
   
   <p><strong>Packet Data:</strong></p>
@@ -35,10 +35,55 @@
 <!-- Back to previous tab -->
 <a href="/<%= currentTab %>">Back to <%= currentTab.charAt(0).toUpperCase() + currentTab.slice(1) %> Alerts</a>
 
+<div class="overlay" id="chatOverlay" onclick="closeChatPopup()"></div>
+<div class="popup" id="chatPopup">
+  <h5>ChatGPT Assistance</h5>
+  <div id="chatContent"></div>
+  <div id="loadingMessage" style="display: none;">Loading response...</div>
+  <button class="btn btn-secondary mt-3" onclick="closeChatPopup()">Close</button>
+</div>
+
 <script>
   document.getElementById('packetDataToggle').addEventListener('change', function() {
     const isOriginal = this.value === 'original';
     const packetDataContent = document.getElementById('packetDataContent');
     packetDataContent.textContent = isOriginal ? `<%= alert.originalPacketData || "N/A" %>` : `<%= alert.decodedPacketData || "N/A" %>`;
   });
+
+  async function openChatPopup(messageContent, apiKey) {
+    // Show the overlay and popup
+    document.getElementById('chatOverlay').style.display = 'block';
+    document.getElementById('chatPopup').style.display = 'block';
+    document.getElementById('chatContent').innerText = `Message: ${messageContent}`;
+    document.getElementById('loadingMessage').style.display = 'block';
+
+    // ChatGPT API interaction
+    const chatContentElement = document.getElementById('chatContent');
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "text-davinci-003",
+          prompt: `Help me understand this Suricata alert: ${messageContent}`,
+          max_tokens: 150,
+        }),
+      });
+      const data = await response.json();
+      chatContentElement.innerText += "\n\nChatGPT Response:\n" + data.choices[0].text;
+    } catch (error) {
+      chatContentElement.innerText += "\n\nError retrieving response from ChatGPT.";
+    } finally {
+      document.getElementById('loadingMessage').style.display = 'none';
+    }
+  }
+
+  function closeChatPopup() {
+    document.getElementById('chatOverlay').style.display = 'none';
+    document.getElementById('chatPopup').style.display = 'none';
+  }
 </script>

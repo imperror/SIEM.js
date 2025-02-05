@@ -9,3 +9,4 @@ postgres/data/
 
 # Environment files
 .env
+.DS_Store
